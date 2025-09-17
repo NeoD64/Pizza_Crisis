@@ -1,0 +1,43 @@
+## Make a GUI that supports the following:
+
+Home Screen
+
+-> “View Menu” button
+
+-> “Place Order” button
+
+-> “Staff Reports” button
+
+Menu Screen
+
+-> Pizza list (name, price, veg/vegan)
+
+-> Drinks/desserts list
+
+-> “Back” button
+
+Order Screen
+
+-> Customer info entry form
+
+-> Pizza selector (checkboxes/spinboxes for quantity)
+
+-> Discount code entry
+
+-> “Place Order” button
+
+Confirmation Screen
+
+-> Shows assigned delivery person
+
+-> Final price after discount
+
+-> Estimated delivery time
+
+Staff Reports Screen
+
+-> Dropdown/list to select report type
+
+ -> Display results in table/list
+
+

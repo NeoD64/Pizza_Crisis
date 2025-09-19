@@ -2,6 +2,7 @@ from flask import Flask
 from Model import db
 from dotenv import load_dotenv
 import os
+from routes import bp
 
 def create_app():
     app = Flask(__name__)
@@ -16,6 +17,8 @@ def create_app():
 
     # Initialize extensions
     db.init_app(app)
+
+    app.register_blueprint(bp)
 
     # Create tables if they don't exist
     with app.app_context():

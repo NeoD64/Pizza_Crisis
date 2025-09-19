@@ -1,0 +1,7 @@
+{% extends "base.html" %}
+{% block content %}
+    <h1 style="color: red;">Welcome to Pizza Crisis App!</h1>
+    <a href="{{ url_for('main.menu') }}"><button>View Menu</button></a>
+    <a href="{{ url_for('main.order') }}"><button>Place Order</button></a>
+    <a href="{{ url_for('main.reports') }}"><button>Staff Reports</button></a>
+{% endblock %}

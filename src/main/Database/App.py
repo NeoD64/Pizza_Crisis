@@ -1,12 +1,17 @@
 from flask import Flask
-from Model import db, Customer, DiscountCode, DeliveryPerson, Order, Pizza, Ingredient, Drink, Dessert, PizzaIngredient, Payment
+from Model import (
+    db, Customer, DiscountCode, DeliveryPerson, Order,
+    Pizza, Ingredient, Drink, Dessert, Payment
+)
 from dotenv import load_dotenv
 import os
 from routes import bp
-from datetime import datetime, date, timedelta
+from datetime import datetime, date, timedelta, UTC
+
 
 def seed_db():
-    """seeding data in the database"""
+    """Insert initial reference data into the database if empty."""
+
     if not Ingredient.query.first():
         cheese = Ingredient(ingredient_name="Cheese", ingredient_price=1.0)
         tomato = Ingredient(ingredient_name="Tomato Sauce", ingredient_price=0.5)
@@ -18,11 +23,23 @@ def seed_db():
         db.session.commit()
 
     if not Pizza.query.first():
-        margherita = Pizza(pizza_name="Margherita")
-        pepperoni_pizza = Pizza(pizza_name="Pepperoni Pizza")
-        veggie = Pizza(pizza_name="Veggie")
-        db.session.add_all([margherita, pepperoni_pizza, veggie])
+        margherita = Pizza(pizza_name="Margherita", base_price=5.00)
+        pepperoni_pizza = Pizza(pizza_name="Pepperoni", base_price=6.00)
+        veggie = Pizza(pizza_name="Veggie", base_price=6.50)
+        hawaiian = Pizza(pizza_name="Hawaiian", base_price=7.00)
+        bbq = Pizza(pizza_name="BBQ Chicken", base_price=7.50)
+        four_cheese = Pizza(pizza_name="Four Cheese", base_price=7.00)
+        meat_feast = Pizza(pizza_name="Meat Feast", base_price=8.50)
+        vegan = Pizza(pizza_name="Vegan Delight", base_price=6.50)
+        med = Pizza(pizza_name="Mediterranean", base_price=7.00)
+        spicy = Pizza(pizza_name="Spicy Special", base_price=7.50)
+
+        db.session.add_all([
+            margherita, pepperoni_pizza, veggie, hawaiian,
+            bbq, four_cheese, meat_feast, vegan, med, spicy
+        ])
         db.session.commit()
+
 
         cheese = Ingredient.query.filter_by(ingredient_name="Cheese").first()
         tomato = Ingredient.query.filter_by(ingredient_name="Tomato Sauce").first()
@@ -31,7 +48,7 @@ def seed_db():
         onion = Ingredient.query.filter_by(ingredient_name="Onion").first()
         olives = Ingredient.query.filter_by(ingredient_name="Olives").first()
 
-        margherita.ingredients.extend([cheese,tomato])
+        margherita.ingredients.extend([cheese, tomato])
         pepperoni_pizza.ingredients.extend([cheese, tomato, pepperoni])
         veggie.ingredients.extend([cheese, tomato, mushroom, onion, olives])
         db.session.commit()
@@ -52,54 +69,32 @@ def seed_db():
     if not Customer.query.first():
         john = Customer(
             first_name="John", last_name="Doe",
-            email="john@example.com", phone_number="123456789",
-            birthdate=date(1990, 5, 20), address="123 Main St", postal_code="1000"
+            phone_number="123456789",
+            birthdate=date(1990, 5, 20),
+            address="123 Main St", postal_code="1000"
         )
         jane = Customer(
             first_name="Jane", last_name="Smith",
-            email="jane@example.com", phone_number="987654321",
-            birthdate=date(1985, 7, 15), address="456 Elm St", postal_code="2000"
+            phone_number="987654321",
+            birthdate=date(1985, 7, 15),
+            address="456 Elm St", postal_code="2000"
         )
         db.session.add_all([john, jane])
-        db.session.commit()
-
-    if not DeliveryPerson.query.first():
-        dp1 = DeliveryPerson(first_name="Alice", last_name="Rider", phone_number="5551234", postal_code="1000")
-        dp2 = DeliveryPerson(first_name="Bob", last_name="Courier", phone_number="5555678", postal_code="2000")
-        db.session.add_all([dp1, dp2])
         db.session.commit()
 
     if not DiscountCode.query.first():
         summer = DiscountCode(
             code="SUMMER10",
             discount_percentage=10.0,
-            expires_at=datetime.utcnow() + timedelta(days=30),
+            expires_at=datetime.now(UTC) + timedelta(days=30),
             is_used=False
         )
         db.session.add(summer)
         db.session.commit()
 
-    if not Order.query.first():
-        john = Customer.query.filter_by(email="john@example.com").first()
-        dp1 = DeliveryPerson.query.filter_by(postal_code="1000").first()
-        summer = DiscountCode.query.filter_by(code="SUMMER10").first()
-        margherita = Pizza.query.filter_by(pizza_name="Margherita").first()
-        cola = Drink.query.filter_by(drink_name="Cola").first()
-
-        order1 = Order(customer=john, delivery_person=dp1, discount=summer, status="Delivered")
-        order1.pizzas.append(margherita)
-        order1.drinks.append(cola)
-        db.session.add(order1)
-        db.session.commit()
-
-        payment1 = Payment(order_id=order1.id, amount=order1.total_amount, payment_date=datetime.utcnow())
-        db.session.add(payment1)
-        db.session.commit()
-
 
 def create_app():
     app = Flask(__name__)
-
 
     load_dotenv()
 

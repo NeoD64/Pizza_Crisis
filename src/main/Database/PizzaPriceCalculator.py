@@ -1,3 +1,7 @@
+from sqlalchemy.orm import Session
+from Model import Pizza, PizzaIngredient, Ingredient, db
+
+
 
 class PizzaPriceCalculator:
     def __init__(self, ingredient_costs: list[float]):
@@ -18,3 +22,14 @@ class PizzaPriceCalculator:
 
     def final_price(self) -> float:
         return round(self.with_margin() * 1.09, 2)
+
+    @staticmethod
+    def calculate_pizza_price(pizza_id: int) -> float:
+        pizza = db.session.get(Pizza, pizza_id)
+        if not pizza:
+            raise ValueError(f"Pizza with id={pizza_id} not found")
+
+        ingredient_costs = [ingredient.ingredient_price for ingredient in pizza.ingredients]
+        calc = PizzaPriceCalculator(ingredient_costs)
+        return calc.final_price()
+

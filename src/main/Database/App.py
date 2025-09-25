@@ -1,3 +1,5 @@
+from datetime import date, datetime, timedelta, timezone
+
 from flask import Flask
 from Model import (
     db, Customer, DiscountCode, DeliveryPerson, Order,
@@ -6,7 +8,7 @@ from Model import (
 from dotenv import load_dotenv
 import os
 from routes import bp
-from datetime import datetime, date, timedelta, UTC
+
 
 
 def seed_db():
@@ -86,7 +88,7 @@ def seed_db():
         summer = DiscountCode(
             code="SUMMER10",
             discount_percentage=10.0,
-            expires_at=datetime.now(UTC) + timedelta(days=30),
+            expires_at=datetime.now(timezone.utc) + timedelta(days=30),
             is_used=False
         )
         db.session.add(summer)

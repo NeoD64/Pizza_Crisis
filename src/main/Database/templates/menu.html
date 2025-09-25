@@ -1,12 +1,48 @@
 {% extends "base.html" %}
-
 {% block content %}
-    <h2>Menu</h2>
-    <a href="{{ url_for('main.home') }}"><button>Back</button></a>
+    <h2>Our Menu</h2>
 
-    <ul>
+    <h3>Pizzas</h3>
+    <div class="menu-grid">
         {% for pizza in pizzas %}
-            <li>{{ pizza.name }} — €{{ "%.2f"|format(pizza.price) }}</li>
+        <div class="menu-item">
+            <h4>{{ pizza.pizza_name }}</h4>
+            <p>Price: {{ pizza.final_amount() }} $</p>
+            <form action="{{ url_for('main.order') }}" method="post">
+                <input type="hidden" name="pizza_id" value="{{ pizza.id }}">
+                <button type="submit">Add to Order</button>
+            </form>
+        </div>
         {% endfor %}
-    </ul>
+    </div>
+
+    <h3>Desserts</h3>
+    <div class="menu-grid">
+        {% for dessert in desserts %}
+        <div class="menu-item">
+            <h4>{{ dessert.dessert_name }}</h4>
+            <p>Price: €{{ dessert.dessert_price }}</p>
+            <form action="{{ url_for('main.order') }}" method="post">
+                <input type="hidden" name="dessert_id" value="{{ dessert.id }}">
+                <button type="submit">Add to Order</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <h3>Drinks</h3>
+    <div class="menu-grid">
+        {% for drink in drinks %}
+        <div class="menu-item">
+            <h4>{{ drink.drink_name }}</h4>
+            <p>Price: €{{ drink.drink_price }}</p>
+            <form action="{{ url_for('main.order') }}" method="post">
+                <input type="hidden" name="drink_id" value="{{ drink.id }}">
+                <button type="submit">Add to Order</button>
+            </form>
+        </div>
+        {% endfor %}
+    </div>
+
+    <a href="{{ url_for('main.home') }}"><button>⬅ Back</button></a>
 {% endblock %}

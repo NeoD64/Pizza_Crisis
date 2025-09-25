@@ -1,5 +1,5 @@
 from flask import render_template, Blueprint
-from Model import Pizza
+from Model import Pizza, Dessert, Drink
 
 bp = Blueprint("main", __name__)
 
@@ -8,17 +8,12 @@ def home():
     return render_template("home.html")
 
 @bp.route("/menu")
+
 def menu():
     pizzas = Pizza.query.all()
-
-    pizza_data = []
-    for pizza in pizzas:
-        pizza_data.append({
-            "name": pizza.pizza_name,
-            "price": pizza.final_amount()  # ✅ now always uses base_price
-        })
-
-    return render_template("menu.html", pizzas=pizza_data)
+    desserts = Dessert.query.all()
+    drinks = Drink.query.all()
+    return render_template("menu.html", pizzas=pizzas, desserts=desserts, drinks=drinks)
 
 
 @bp.route("/order")

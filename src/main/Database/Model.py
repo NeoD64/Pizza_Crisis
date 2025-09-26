@@ -100,29 +100,28 @@ class Pizza(db.Model):
     __tablename__ = 'pizza'
     id = db.Column(db.Integer, primary_key=True)
     pizza_name = db.Column(db.String(100), unique=True, nullable=False)
-    base_price = db.Column(db.Float, nullable=False)  # ✅ stored in DB
+    base_price = db.Column(db.Float, nullable=False)
+
+    category = db.Column(db.String(20), default="Normal")  # "Normal", "Vegetarian", "Vegan"
+
+    # values: "Normal", "Vegetarian", "Vegan"
 
     ingredients = db.relationship("Ingredient", secondary="pizzaingredient", back_populates="pizzas")
     orders = db.relationship("Order", secondary="order_pizzas", back_populates="pizzas")
 
     def ingredient_cost(self) -> float:
-        """Sum of all ingredient prices linked to this pizza."""
         return sum(ingredient.ingredient_price for ingredient in self.ingredients)
 
     def subtotal(self) -> float:
-        """Base price + ingredient costs (before margin/tax)."""
         return self.base_price + self.ingredient_cost()
 
     def final_amount(self) -> float:
-        """
-        Final selling price:
-        (base price + ingredient costs) → add 40% margin → add 9% tax.
-        """
         margin = self.subtotal() * 1.4
         return round(margin * 1.09, 2)
 
     def __repr__(self):
-        return f"<Pizza {self.id} - {self.pizza_name}>"
+        return f"<Pizza {self.id} - {self.pizza_name} ({self.category})>"
+
 
 
 class Ingredient(db.Model):
@@ -162,7 +161,7 @@ class Dessert(db.Model):
 
 
 class PizzaIngredient(db.Model):
-    __tablename__ = 'pizzaingredient'  # ✅ matches your DB
+    __tablename__ = 'pizzaingredient'
     pizza_id = db.Column(db.ForeignKey('pizza.id'), primary_key=True)
     ingredient_id = db.Column(db.ForeignKey('ingredient.id'), primary_key=True)
 

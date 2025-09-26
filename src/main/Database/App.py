@@ -10,7 +10,6 @@ import os
 from routes import bp
 
 
-
 def seed_db():
     """Insert initial reference data into the database if empty."""
 
@@ -25,15 +24,15 @@ def seed_db():
         db.session.commit()
 
     if not Pizza.query.first():
-        margherita = Pizza(pizza_name="Margherita", base_price=5.00)
+        margherita = Pizza(pizza_name="Margherita", base_price=5.00, category="Vegetarian")
         pepperoni_pizza = Pizza(pizza_name="Pepperoni", base_price=6.00)
-        veggie = Pizza(pizza_name="Veggie", base_price=6.50)
+        veggie = Pizza(pizza_name="Veggie", base_price=6.50, category="Vegetarian")
         hawaiian = Pizza(pizza_name="Hawaiian", base_price=7.00)
         bbq = Pizza(pizza_name="BBQ Chicken", base_price=7.50)
-        four_cheese = Pizza(pizza_name="Four Cheese", base_price=7.00)
+        four_cheese = Pizza(pizza_name="Four Cheese", base_price=7.00, category="Vegetarian")
         meat_feast = Pizza(pizza_name="Meat Feast", base_price=8.50)
-        vegan = Pizza(pizza_name="Vegan Delight", base_price=6.50)
-        med = Pizza(pizza_name="Mediterranean", base_price=7.00)
+        vegan = Pizza(pizza_name="Vegan Delight", base_price=6.50, category="Vegan")
+        med = Pizza(pizza_name="Mediterranean", base_price=7.00, category="Vegetarian")
         spicy = Pizza(pizza_name="Spicy Special", base_price=7.50)
 
         db.session.add_all([
@@ -41,7 +40,6 @@ def seed_db():
             bbq, four_cheese, meat_feast, vegan, med, spicy
         ])
         db.session.commit()
-
 
         cheese = Ingredient.query.filter_by(ingredient_name="Cheese").first()
         tomato = Ingredient.query.filter_by(ingredient_name="Tomato Sauce").first()
@@ -100,6 +98,8 @@ def create_app():
 
     load_dotenv()
 
+    app.config["SECRET_KEY"] = os.getenv("SECRET_KEY", "dev-secret-change-this")
+
     app.config['SQLALCHEMY_DATABASE_URI'] = (
         f"mysql+pymysql://{os.getenv('DB_USER')}:{os.getenv('DB_PASSWORD')}@localhost:3306/pizza"
     )
@@ -112,8 +112,8 @@ def create_app():
         db.create_all()
         seed_db()
 
-    @app.route('/')
-    def home():
+    @app.route('/ping')
+    def ping():
         return "Flask app with SQLAlchemy is running!"
 
     return app

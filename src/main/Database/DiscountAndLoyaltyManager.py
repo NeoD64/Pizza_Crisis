@@ -16,7 +16,6 @@ class DiscountAndLoyaltyManager:
     All calculations use Decimal and round to cents each step.
     """
 
-    # which order statuses count toward "historical purchases"
     LOYALTY_COMPLETED_STATUSES = {"COMPLETED", "PAID", "FULFILLED"}
 
     def __init__(self, customer, order, discount_code=None, now: datetime | None = None):

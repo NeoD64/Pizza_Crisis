@@ -1,6 +1,7 @@
 from flask import render_template, Blueprint, session, redirect, url_for, request
 from Model import Pizza, Dessert, Drink, Order, db, Customer
 from DiscountAndLoyaltyManager import DiscountAndLoyaltyManager
+from sqlalchemy import text
 import re
 
 bp = Blueprint("main", __name__)
@@ -198,15 +199,39 @@ def checkout():
                 order.desserts.append(dessert)
 
     manager = DiscountAndLoyaltyManager(customer, order, discount_code)
-    final_total, discounts, invalid_code = manager.apply_all_discounts(db.session, for_checkout=True)
+    final_total, discounts, invalid_code = manager.apply_all_discounts(
+        db.session, for_checkout=True
+    )
 
+    assign_query = text("""
+        UPDATE orders o
+        JOIN customers c ON o.customer_id = c.id
+        JOIN deliveryperson d 
+          ON d.postal_code = c.postal_code
+          AND (d.available_at IS NULL OR d.available_at <= NOW())
+        SET 
+            o.delivery_person_id = d.id,
+            o.delivery_status = 'OUT_FOR_DELIVERY';
+    """)
+
+    db.session.execute(assign_query)
+    db.session.commit()
+
+    cooldown_query = text("""
+        UPDATE deliveryperson 
+        SET available_at = NOW() + INTERVAL 30 MINUTE
+        WHERE id = (
+            SELECT delivery_person_id FROM orders 
+            WHERE id = :order_id
+        )
+    """)
+    db.session.execute(cooldown_query, {"order_id": order.id})
     db.session.commit()
 
     session.pop("basket", None)
     session.pop("discount_code", None)
+
     return redirect(url_for("main.menu"))
-
-
 
 @bp.route("/reports")
 def reports():

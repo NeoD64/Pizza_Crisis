@@ -82,6 +82,30 @@ def seed_db():
         db.session.add_all([john, jane])
         db.session.commit()
 
+    # --- Seed delivery personnel ---
+    if not DeliveryPerson.query.first():
+        dp1 = DeliveryPerson(
+            first_name="Tom", last_name="Rider",
+            phone_number="0620000001",
+            postal_code="1000",  # matches John's postal code
+            available_at=datetime.now(timezone.utc)
+        )
+        dp2 = DeliveryPerson(
+            first_name="Sara", last_name="Courier",
+            phone_number="0620000002",
+            postal_code="2000",  # matches Jane's postal code
+            available_at=datetime.now(timezone.utc)
+        )
+        dp3 = DeliveryPerson(
+            first_name="Mike", last_name="Driver",
+            phone_number="0620000003",
+            postal_code="3000",
+            available_at=datetime.now(timezone.utc)
+        )
+        db.session.add_all([dp1, dp2, dp3])
+        db.session.commit()
+
+
     if not DiscountCode.query.first():
         summer = DiscountCode(
             code="SUMMER10",

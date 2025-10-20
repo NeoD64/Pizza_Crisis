@@ -42,6 +42,7 @@ class DeliveryPerson(db.Model):
     last_name = db.Column(db.String(100), nullable=False)
     phone_number = db.Column(db.String(50), unique=True, nullable=False)
     postal_code = db.Column(db.String(10), nullable=False)
+    available_at = db.Column(db.DateTime, default=datetime.utcnow)
 
     orders = db.relationship("Order", back_populates="delivery_person")
 
@@ -53,7 +54,10 @@ class Order(db.Model):
     __tablename__ = 'orders'
     id = db.Column(db.Integer, primary_key=True)
     order_date = db.Column(db.DateTime, default=datetime.utcnow)
-    status = db.Column(db.String(50), default="Pending")  # Pending, Delivered, etc.
+    delivery_status = db.Column(
+        db.Enum('PENDING', 'OUT_FOR_DELIVERY', 'DELIVERED'),
+        default='PENDING'
+    )
 
     customer_id = db.Column(db.Integer, db.ForeignKey('customers.id'))
     discount_id = db.Column(db.Integer, db.ForeignKey('discountcode.id'))
@@ -84,6 +88,7 @@ class OrderPizza(db.Model):
     order_id = db.Column(db.ForeignKey('orders.id'), primary_key=True)
     pizza_id = db.Column(db.ForeignKey('pizza.id'), primary_key=True)
 
+
 class OrderDrink(db.Model):
     __tablename__ = 'order_drinks'
     order_id = db.Column(db.ForeignKey('orders.id'), primary_key=True)
@@ -101,10 +106,7 @@ class Pizza(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     pizza_name = db.Column(db.String(100), unique=True, nullable=False)
     base_price = db.Column(db.Float, nullable=False)
-
     category = db.Column(db.String(20), default="Normal")  # "Normal", "Vegetarian", "Vegan"
-
-    # values: "Normal", "Vegetarian", "Vegan"
 
     ingredients = db.relationship("Ingredient", secondary="pizzaingredient", back_populates="pizzas")
     orders = db.relationship("Order", secondary="order_pizzas", back_populates="pizzas")
@@ -123,14 +125,13 @@ class Pizza(db.Model):
         return f"<Pizza {self.id} - {self.pizza_name} ({self.category})>"
 
 
-
 class Ingredient(db.Model):
     __tablename__ = 'ingredient'
     id = db.Column(db.Integer, primary_key=True)
     ingredient_name = db.Column(db.String(100), nullable=False)
     ingredient_price = db.Column(db.Float, nullable=False)
 
-    pizzas = db.relationship("Pizza", secondary="pizzaingredient", back_populates="ingredients")  # ✅ fixed
+    pizzas = db.relationship("Pizza", secondary="pizzaingredient", back_populates="ingredients")
 
     def __repr__(self):
         return f"<Ingredient {self.id} - {self.ingredient_name}>"

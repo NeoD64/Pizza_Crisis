@@ -1,12 +1,11 @@
 from flask import render_template, Blueprint, session, redirect, url_for, request
 from Model import Pizza, Dessert, Drink, Order, db, Customer
 from DiscountAndLoyaltyManager import DiscountAndLoyaltyManager
+import re
 
 bp = Blueprint("main", __name__)
 
-
 def get_basket():
-    """Ensure basket always in {type: {id: qty}} dict format."""
     basket = session.get("basket", {"pizzas": {}, "drinks": {}, "desserts": {}})
     for key in ["pizzas", "drinks", "desserts"]:
         if isinstance(basket.get(key), list):
@@ -17,18 +16,15 @@ def get_basket():
     session["basket"] = basket
     return basket
 
-
 @bp.route("/")
 def home():
     return render_template("home.html")
-
 
 @bp.route("/menu", methods=["GET", "POST"])
 def menu():
     pizzas = Pizza.query.all()
     desserts = Dessert.query.all()
     drinks = Drink.query.all()
-
     basket = get_basket()
     basket_items = []
     subtotal = 0.0
@@ -45,7 +41,6 @@ def menu():
                 "category": pizza.category
             })
             subtotal += price
-
 
     for did, qty in basket["drinks"].items():
         drink = Drink.query.get(int(did))
@@ -73,7 +68,11 @@ def menu():
 
     discount_code = None
     if request.method == "POST":
-        discount_code = request.form.get("discount_code")
+        form_code = request.form.get("discount_code", "").strip()
+        discount_code = form_code if form_code else None
+        session["discount_code"] = discount_code
+    else:
+        discount_code = session.get("discount_code") if basket_items else None
 
     customer = Customer.query.get(1)
     temp_order = Order(customer_id=1)
@@ -88,10 +87,53 @@ def menu():
         elif item["type"] == "desserts":
             temp_order.desserts.append(Dessert.query.get(int(item["id"])))
 
-    manager = DiscountAndLoyaltyManager(customer, temp_order, discount_code)
-    final_total, discounts = manager.apply_all_discounts(db.session)
+    discounts = []
+    invalid_code = False
+    final_total = subtotal
 
-    db.session.rollback()
+    if discount_code:
+        manager = DiscountAndLoyaltyManager(customer, temp_order, discount_code)
+        final_total, discounts, invalid_code = manager.apply_all_discounts(db.session)
+        db.session.rollback()
+
+        if invalid_code:
+            final_total = subtotal
+        elif not discounts:
+            final_total = subtotal
+            discounts = []
+
+        else:
+            pct = None
+            for d in discounts:
+                if "%" in d and "❌" not in d:
+                    match = re.search(r"(\d+)", d)
+                    if match:
+                        pct = int(match.group(1))
+                        break
+
+            if pct is not None:
+                final_total = subtotal * (1 - pct / 100)
+            elif any("Free Pizza" in d for d in discounts):
+                pizzas_in_basket = [
+                    Pizza.query.get(int(pid)) for pid in basket["pizzas"].keys()
+                ]
+                cheapest = min(
+                    (p.final_amount() for p in pizzas_in_basket if p), default=0
+                )
+                final_total = subtotal - cheapest
+            else:
+                final_total = subtotal
+    else:
+        manager = DiscountAndLoyaltyManager(customer, temp_order, None)
+        final_total, discounts, _ = manager.apply_all_discounts(db.session)
+        db.session.rollback()
+        if not discounts:
+            final_total = subtotal
+
+    final_total = round(final_total, 2)
+
+    if invalid_code or not basket_items:
+        session.pop("discount_code", None)
 
     return render_template(
         "menu.html",
@@ -102,9 +144,8 @@ def menu():
         subtotal=subtotal,
         final_total=final_total,
         discounts=discounts,
-        invalid_code=manager.invalid_code
+        invalid_code=invalid_code
     )
-
 
 @bp.route("/add_to_basket/<item_type>/<int:item_id>", methods=["GET"])
 def add_to_basket(item_type, item_id):
@@ -113,7 +154,6 @@ def add_to_basket(item_type, item_id):
     basket[item_type][key] = basket[item_type].get(key, 0) + 1
     session["basket"] = basket
     return redirect(url_for("main.menu"))
-
 
 @bp.route("/remove_from_basket/<item_type>/<int:item_id>", methods=["GET"])
 def remove_from_basket(item_type, item_id):
@@ -126,12 +166,14 @@ def remove_from_basket(item_type, item_id):
     session["basket"] = basket
     return redirect(url_for("main.menu"))
 
-
 @bp.route("/checkout")
 def checkout():
     basket = get_basket()
     if not (basket["pizzas"] or basket["drinks"] or basket["desserts"]):
         return redirect(url_for("main.menu"))
+
+    discount_code = session.get("discount_code")
+    customer = Customer.query.get(1)
 
     order = Order(customer_id=1)
     db.session.add(order)
@@ -155,15 +197,15 @@ def checkout():
             for _ in range(qty):
                 order.desserts.append(dessert)
 
+    manager = DiscountAndLoyaltyManager(customer, order, discount_code)
+    final_total, discounts, invalid_code = manager.apply_all_discounts(db.session, for_checkout=True)
+
     db.session.commit()
+
     session.pop("basket", None)
+    session.pop("discount_code", None)
+    return redirect(url_for("main.menu"))
 
-    return redirect(url_for("main.order"))
-
-
-@bp.route("/order")
-def order():
-    return render_template("order.html")
 
 
 @bp.route("/reports")

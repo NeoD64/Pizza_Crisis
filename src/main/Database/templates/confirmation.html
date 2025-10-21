@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+{% block content %}
+    <h2>Order Confirmation #{{ order.id }}</h2>
+    <p>Thank you, {{ order.customer.first_name }}! Your order has been placed successfully.</p>
+
+    <h3>Order Details:</h3>
+    <ul style="list-style: none; padding: 0;">
+        {% for item in pizza_items_with_qty %}
+            <li>{{ item.quantity }}× {{ item.pizza.pizza_name }} - €{{ "%.2f"|format(item.price) }}</li>
+        {% endfor %}
+        {% for item in drink_items_with_qty %}
+            <li>{{ item.quantity }}× {{ item.drink.drink_name }} - €{{ "%.2f"|format(item.price) }}</li>
+        {% endfor %}
+        {% for item in dessert_items_with_qty %}
+            <li>{{ item.quantity }}× {{ item.dessert.dessert_name }} - €{{ "%.2f"|format(item.price) }}</li>
+        {% endfor %}
+    </ul>
+    {% if is_cancellable %}
+    <div class="alert alert-info mt-4">
+        <p>You can cancel this order within 5 minutes of placing it.</p>
+        <form action="{{ url_for('main.cancel_order', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+            <button type="submit" class="btn btn-danger">Cancel Order</button>
+        </form>
+    </div>
+    {% endif %}
+
+    {% if order.status == 'CANCELLED' %}
+    <div class="alert alert-danger mt-4">
+        <h4 class="alert-heading">Order Cancelled</h4>
+        <p>This order was successfully cancelled.</p>
+    </div>
+    {% endif %}
+
+    <p>Order Total (after discounts): <b>€{{ "%.2f"|format(order.total_amount) }}</b></p>
+    <p>Status: <b>{{ order.status }}</b></p>
+
+    {% if delivery_person %}
+        <h3>Delivery Information:</h3>
+        <p>Your order is assigned to: <b>{{ delivery_person.first_name }} {{ delivery_person.last_name }}</b></p>
+        <p>Estimated Delivery Time: <b>{{ estimated_delivery_time }}</b> UTC</p>
+    {% else %}
+        <p>A delivery person will be assigned shortly. Estimated delivery time will be updated.</p>
+    {% endif %}
+
+    <p style="margin-top: 2rem;">We appreciate your business!</p>
+    <a href="{{ url_for('main.home') }}"><button>Back to Home</button></a>
+{% endblock %}

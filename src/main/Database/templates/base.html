@@ -18,16 +18,39 @@
     <nav>
         <a href="{{ url_for('main.home') }}">Home</a>
         <a href="{{ url_for('main.menu') }}">Menu</a>
-        <a href="{{ url_for('main.reports') }}">Reports</a>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('main.staff_reports') }}">Staff Reports</a>
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('main.login') }}">Login</a>
+            <a href="{{ url_for('main.register') }}">Register</a>
+        {% endif %}
     </nav>
     </header>
 
-
     <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <ul class="flashes">
+                    {% for category, message in messages %}
+                        <li class="{{ category }}">{{ message }}</li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endwith %}
         {% block content %}{% endblock %}
     </div>
 
     <div id="mySidenav" class="sidenav">
+        <a href="{{ url_for('main.home') }}">Home</a>
+        <a href="{{ url_for('main.menu') }}">Menu</a>
+        {% if session.get('user_id') %}
+            <a href="{{ url_for('main.staff_reports') }}">Staff Reports</a>
+            <a href="{{ url_for('main.logout') }}">Logout</a>
+        {% else %}
+            <a href="{{ url_for('main.login') }}">Login</a>
+            <a href="{{ url_for('main.register') }}">Register</a>
+        {% endif %}
         <a href="#">About</a>
         <a href="#">Services</a>
         <a href="#">Clients</a>
@@ -36,7 +59,7 @@
 
     <script>
         function toggleNav(x) {
-            x.classList.toggle("change");  // animation du bouton
+            x.classList.toggle("change");
             let sidenav = document.getElementById("mySidenav");
             if (sidenav.style.width === "250px") {
                 sidenav.style.width = "0";

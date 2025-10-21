@@ -40,4 +40,8 @@ Staff Reports Screen
 
  -> Display results in table/list
 
-
+Flask
+Flask-SQLAlchemy
+PyMySQL
+python-dotenv
+Werkzeug

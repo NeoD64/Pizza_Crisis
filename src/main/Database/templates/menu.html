@@ -3,7 +3,6 @@
     <h2>Our Menu</h2>
 
     <div class="menu-container" style="display: flex; gap: 2rem;">
-        <!-- Menu items -->
         <div class="menu-section" style="flex: 3;">
             <h3>Pizzas</h3>
             <div class="menu-grid">
@@ -17,7 +16,7 @@
                             <span style="color: darkgreen;">(V)</span>
                         {% endif %}
                     </h4>
-                    <p>Price: €{{ pizza.final_amount() }}</p>
+                    <p>Price: €{{ "%.2f"|format(pizza.final_amount()) }}</p>
                     <a href="{{ url_for('main.add_to_basket', item_type='pizzas', item_id=pizza.id) }}">
                         <button type="button">Add to Basket</button>
                     </a>
@@ -30,7 +29,7 @@
                 {% for dessert in desserts %}
                 <div class="menu-item" style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
                     <h4>{{ dessert.dessert_name }}</h4>
-                    <p>Price: €{{ dessert.dessert_price }}</p>
+                    <p>Price: €{{ "%.2f"|format(dessert.dessert_price) }}</p>
                     <a href="{{ url_for('main.add_to_basket', item_type='desserts', item_id=dessert.id) }}">
                         <button type="button">Add to Basket</button>
                     </a>
@@ -43,7 +42,7 @@
                 {% for drink in drinks %}
                 <div class="menu-item" style="border: 1px solid #ccc; padding: 1rem; margin-bottom: 1rem; border-radius: 8px;">
                     <h4>{{ drink.drink_name }}</h4>
-                    <p>Price: €{{ drink.drink_price }}</p>
+                    <p>Price: €{{ "%.2f"|format(drink.drink_price) }}</p>
                     <a href="{{ url_for('main.add_to_basket', item_type='drinks', item_id=drink.id) }}">
                         <button type="button">Add to Basket</button>
                     </a>
@@ -52,8 +51,8 @@
             </div>
         </div>
 
-        <!-- Basket Sidebar -->
-        <div class="basket-sidebar" style="flex: 1; border-left: 2px solid #ddd; padding: 1rem; background: #fafafa;">
+
+        <div id="basket" class="basket-sidebar" style="flex: 1; border-left: 2px solid #ddd; padding: 1rem; background: #fafafa;">
             <h3 style="text-align:center; margin-bottom: 1rem;">🛒 Your Basket</h3>
             {% if basket_items %}
                 <ul style="list-style: none; padding: 0;">
@@ -100,9 +99,12 @@
                 </form>
 
                 <div style="text-align: center; margin-top: 1.5rem;">
-                    <a href="{{ url_for('main.checkout') }}" style="background: #28a745; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: bold; transition: background 0.2s;">
-                        ✅ Checkout
-                    </a>
+                    <form action="{{ url_for('main.checkout') }}" method="post">
+                        <input type="hidden" name="discount_code" value="{{ request.form.get('discount_code', '') }}">
+                        <button type="submit" style="background: #28a745; color: white; padding: 0.7rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: bold; transition: background 0.2s; border: none; cursor: pointer;">
+                            ✅ Checkout
+                        </button>
+                    </form>
                 </div>
             {% else %}
                 <p style="text-align:center; color: #555;">Basket is empty 🕳️</p>

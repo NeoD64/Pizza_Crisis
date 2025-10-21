@@ -1,22 +1,19 @@
 {% extends "base.html" %}
+
 {% block content %}
-    <h2>Welcome to Pizza Crisis App!</h2>
-    {% if session.get('user_id') %}
-        <p>You are logged in as customer ID: {{ session.get('user_id') }}</p>
-        <p>Start by viewing our <a href="{{ url_for('main.menu') }}">delicious menu</a>!</p>
-    {% else %}
-        <p>Please <a href="{{ url_for('main.login') }}">log in</a> or <a href="{{ url_for('main.register') }}">register</a> to place an order.</p>
-    {% endif %}
-
-    <div style="margin-top: 30px;">
-        <a href="{{ url_for('main.menu') }}"><button>View Menu</button></a>
-        {% if session.get('user_id') %}
-            <a href="{{ url_for('main.menu') }}#basket"><button>Place Order</button></a>
-            <a href="{{ url_for('main.staff_reports') }}"><button>Staff Reports</button></a>
-        {% else %}
-            <button onclick="alert('Please log in to place an order.')">Place Order</button>
-            <button onclick="alert('Please log in to view staff reports.')">Staff Reports</button>
-        {% endif %}
+<div class="container">
+    <div class="content-box">
+        <h2>Welcome to Pizza Crisis!</h2>
+        <p>
+            Hello, {{ session.get('user_name', 'friend') }}! You are logged in and ready to go.
+        </p>
+        <p>
+            Use the navigation menu to browse our delicious pizzas, drinks, and desserts. Your basket is saved and ready for when you want to check out.
+        </p>
+        <div style="text-align: center; margin-top: 30px;">
+            <a href="{{ url_for('main.menu') }}" class="button" style="text-decoration: none;">View Menu</a>
+            <a href="{{ url_for('main.logout') }}" class="button" style="text-decoration: none; background-color: #6c757d;">Logout</a>
+        </div>
     </div>
-
+</div>
 {% endblock %}

@@ -1,47 +1,72 @@
 {% extends "base.html" %}
+
 {% block content %}
-    <h2>Order Confirmation #{{ order.id }}</h2>
-    <p>Thank you, {{ order.customer.first_name }}! Your order has been placed successfully.</p>
+<div class="container">
+    <div class="content-box">
+        <h2>Order Confirmation</h2>
 
-    <h3>Order Details:</h3>
-    <ul style="list-style: none; padding: 0;">
-        {% for item in pizza_items_with_qty %}
-            <li>{{ item.quantity }}× {{ item.pizza.pizza_name }} - €{{ "%.2f"|format(item.price) }}</li>
-        {% endfor %}
-        {% for item in drink_items_with_qty %}
-            <li>{{ item.quantity }}× {{ item.drink.drink_name }} - €{{ "%.2f"|format(item.price) }}</li>
-        {% endfor %}
-        {% for item in dessert_items_with_qty %}
-            <li>{{ item.quantity }}× {{ item.dessert.dessert_name }} - €{{ "%.2f"|format(item.price) }}</li>
-        {% endfor %}
-    </ul>
-    {% if is_cancellable %}
-    <div class="alert alert-info mt-4">
-        <p>You can cancel this order within 5 minutes of placing it.</p>
-        <form action="{{ url_for('main.cancel_order', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?');">
-            <button type="submit" class="btn btn-danger">Cancel Order</button>
-        </form>
+        <p><strong>Thank you for your order!</strong> Your order ID is <strong>#{{ order.id }}</strong>.</p>
+        <p><strong>Status:</strong> {{ order.status|string|replace('_', ' ')|title }}</p>
+
+        {% if order.delivery_person %}
+            <p><strong>Delivery Person:</strong> {{ order.delivery_person.first_name }} {{ order.delivery_person.last_name }}</p>
+            <p><strong>Estimated Delivery Time:</strong> {{ estimated_delivery_time }}</p>
+        {% else %}
+            <p>A delivery person will be assigned to your order shortly.</p>
+        {% endif %}
+
+        <hr>
+
+        <h3>Order Summary</h3>
+        <table class="report-table" style="margin-top: 15px;">
+            <thead>
+                <tr>
+                    <th>Item</th>
+                    <th>Quantity</th>
+                    <th style="text-align: right;">Price</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in pizza_items_with_qty %}
+                <tr>
+                    <td>{{ item.pizza.pizza_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td style="text-align: right;">€{{ "%.2f"|format(item.price) }}</td>
+                </tr>
+                {% endfor %}
+                {% for item in drink_items_with_qty %}
+                <tr>
+                    <td>{{ item.drink.drink_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td style="text-align: right;">€{{ "%.2f"|format(item.price) }}</td>
+                </tr>
+                {% endfor %}
+                {% for item in dessert_items_with_qty %}
+                <tr>
+                    <td>{{ item.dessert.dessert_name }}</td>
+                    <td>{{ item.quantity }}</td>
+                    <td style="text-align: right;">€{{ "%.2f"|format(item.price) }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% if is_cancellable %}
+        <div style="background-color: #d1ecf1; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center;">
+            <p style="margin-bottom: 10px; color: #0c5460;">You can cancel this order within the next 5 minutes.</p>
+            <form action="{{ url_for('main.cancel_order', order_id=order.id) }}" method="POST" onsubmit="return confirm('Are you sure you want to cancel this order?');">
+                <button type="submit">Cancel Order</button>
+            </form>
+        </div>
+        {% endif %}
+
+        {% if order.status|string == 'CANCELLED' %}
+        <div style="background-color: #f8d7da; padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; color: #721c24;">
+            <h4>Order Cancelled</h4>
+            <p>This order was successfully cancelled.</p>
+        </div>
+        {% endif %}
+
     </div>
-    {% endif %}
-
-    {% if order.status == 'CANCELLED' %}
-    <div class="alert alert-danger mt-4">
-        <h4 class="alert-heading">Order Cancelled</h4>
-        <p>This order was successfully cancelled.</p>
-    </div>
-    {% endif %}
-
-    <p>Order Total (after discounts): <b>€{{ "%.2f"|format(order.total_amount) }}</b></p>
-    <p>Status: <b>{{ order.status }}</b></p>
-
-    {% if delivery_person %}
-        <h3>Delivery Information:</h3>
-        <p>Your order is assigned to: <b>{{ delivery_person.first_name }} {{ delivery_person.last_name }}</b></p>
-        <p>Estimated Delivery Time: <b>{{ estimated_delivery_time }}</b> UTC</p>
-    {% else %}
-        <p>A delivery person will be assigned shortly. Estimated delivery time will be updated.</p>
-    {% endif %}
-
-    <p style="margin-top: 2rem;">We appreciate your business!</p>
-    <a href="{{ url_for('main.home') }}"><button>Back to Home</button></a>
+</div>
 {% endblock %}

@@ -40,7 +40,6 @@ def create_app():
 def check_deliveries_job(app):
 
     with app.app_context():
-        print("Scheduler: Checking delivery statuses...")
         now = datetime.utcnow()
 
         overdue_orders = Order.query.filter(

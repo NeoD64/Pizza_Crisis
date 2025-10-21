@@ -7,7 +7,7 @@ from DiscountAndLoyaltyManager import DiscountAndLoyaltyManager
 from datetime import datetime, timedelta, timezone
 from sqlalchemy.orm import joinedload
 from functools import wraps
-from sqlalchemy import func, desc
+from sqlalchemy import func, desc,text
 
 bp = Blueprint("main", __name__)
 
@@ -39,46 +39,62 @@ def home():
         return redirect(url_for('main.login'))
     return render_template("home.html")
 
+
+# In routes.py
+
 @bp.route("/register", methods=["GET", "POST"])
 def register():
     if request.method == "POST":
-        first_name = request.form["first_name"]
-        last_name = request.form["last_name"]
-        phone_number = request.form["phone_number"]
-        birthdate_str = request.form["birthdate"]
-        address = request.form["address"]
-        postal_code = request.form["postal_code"]
-        password = request.form["password"]
-
-        birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
-
-        # Check if phone number already exists
-        if Customer.query.filter_by(phone_number=phone_number).first():
-            flash("Phone number already registered. Please log in or use a different number.", "danger")
-            return render_template("register.html")
-
-        new_customer = Customer(
-            first_name=first_name,
-            last_name=last_name,
-            phone_number=phone_number,
-            birthdate=birthdate,
-            address=address,
-            postal_code=postal_code
-        )
-        new_customer.set_password(password)
-
         try:
+            first_name = request.form["first_name"]
+            last_name = request.form["last_name"]
+            phone_number = request.form["phone_number"]
+            birthdate_str = request.form["birthdate"]
+            address = request.form["address"]
+            postal_code = request.form["postal_code"]
+            password = request.form["password"]
+            confirm_password = request.form["confirm_password"]
+            gender_str = request.form["gender"]
+
+            if password != confirm_password:
+                flash("Passwords do not match!", "danger")
+                return render_template("register.html")
+
+            if Customer.query.filter_by(phone_number=phone_number).first():
+                flash("Phone number already registered.", "danger")
+                return render_template("register.html")
+
+            birthdate = datetime.strptime(birthdate_str, "%Y-%m-%d").date()
+
+            new_customer = Customer(
+                first_name=first_name,
+                last_name=last_name,
+                phone_number=phone_number,
+                birthdate=birthdate,
+                address=address,
+                postal_code=postal_code,
+                gender=gender_str
+            )
+            new_customer.set_password(password)
+
             db.session.add(new_customer)
             db.session.commit()
+
             flash("Registration successful! Please log in.", "success")
             return redirect(url_for("main.login"))
-        except Exception as e:
+
+        except ValueError as e:
             db.session.rollback()
-            flash(f"An error occurred during registration: {e}", "danger")
+            flash(f"Invalid Birthday, please input a valid date", "danger")
             return render_template("register.html")
+
+        except Exception as e:
+            # Catch any other unexpected errors
+            db.session.rollback()
+            flash(f"An unexpected error occurred: {e}", "danger")
+            return render_template("register.html")
+
     return render_template("register.html")
-
-
 @bp.route("/login", methods=["GET", "POST"])
 def login():
     if request.method == "POST":
@@ -439,7 +455,7 @@ def staff_reports():
 
     if age_group_filter and age_group_filter != 'all':
 
-        age = func.timestampdiff(func.year(), Customer.birthdate, func.curdate())
+        age = func.timestampdiff(text('YEAR'), Customer.birthdate, func.curdate())
         if age_group_filter == '18-25':
             earnings_query = earnings_query.filter(age.between(18, 25))
         elif age_group_filter == '26-40':

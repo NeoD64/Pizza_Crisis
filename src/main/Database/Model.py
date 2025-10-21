@@ -1,7 +1,9 @@
-from datetime import datetime
+from datetime import datetime ,date
 import enum
 from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy import CheckConstraint
+from sqlalchemy.orm import validates
+
 from werkzeug.security import generate_password_hash, check_password_hash
 
 db = SQLAlchemy()
@@ -10,7 +12,7 @@ class GenderEnum(enum.Enum):
     MALE = 'Male'
     FEMALE = 'Female'
     OTHER = 'Other'
-    PREFER_NOT_TO_SAY = 'Prefer not to say'
+
 
 pizzaingredient = db.Table('pizzaingredient',
     db.Column('pizza_id', db.Integer, db.ForeignKey('pizza.id'), primary_key=True),
@@ -28,18 +30,23 @@ class Customer(db.Model):
     address = db.Column(db.String(250), nullable=False)
     postal_code = db.Column(db.String(10), nullable=False)
     password_hash = db.Column(db.String(255), nullable=False)
-    gender = db.Column(db.Enum(GenderEnum), nullable=True, default=GenderEnum.PREFER_NOT_TO_SAY)
+    gender = db.Column(db.Enum(GenderEnum), nullable=True, default=GenderEnum.OTHER)
 
     is_staff = db.Column(db.Boolean, nullable=False, default=False)
 
     orders = db.relationship("Order", back_populates="customer", cascade="all, delete-orphan")
 
     def set_password(self, password):
-        self.password_hash = generate_password_hash(password)
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
 
+    @validates('birthdate')
+    def validate_birthdate(self, key, birthdate_value):
+        if birthdate_value >= date.today():
+            raise ValueError("Birthdate must be in the past.")
+        return birthdate_value
     def __repr__(self):
         return f"<Customer {self.id} {self.first_name} {self.last_name}>"
 
